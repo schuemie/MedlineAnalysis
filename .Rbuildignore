@@ -1,0 +1,11 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+.gitattributes
+extras
+man-roxygen
+.github
+deploy.sh
+compare_versions
+^cran-comments.md$
+_pkgdown.yml
+docs
