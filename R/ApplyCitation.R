@@ -106,7 +106,7 @@ applyCitations <- function(pmids, fun, fetchSettings, connectionDetails, databas
     tempEmulationSchema = tempEmulationSchema
   )
   delta <- Sys.time() - startTime
-  inform(paste("Procesing citations took", signif(delta, 3), attr(delta, "units")))
+  message(paste("Procesing citations took", signif(delta, 3), attr(delta, "units")))
   
   invisible(results)
 }

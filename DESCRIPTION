@@ -16,7 +16,9 @@ Imports:
   dplyr,
   rlang,
   xml2,
-  stringr
+  stringr,
+  SqlRender,
+  ggplot2
 Suggests:
   testthat
 NeedsCompilation: no

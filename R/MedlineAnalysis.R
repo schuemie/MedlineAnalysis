@@ -18,5 +18,9 @@
 "_PACKAGE"
 
 #' @import dplyr
-#' @importFrom rlang .data
+#' @import DatabaseConnector
+#' @importFrom rlang .data 
+#' @importFrom grDevices rgb
+#' @importFrom stats qnorm runif
+#' @importFrom utils URLencode setTxtProgressBar txtProgressBar
 NULL

@@ -20,6 +20,17 @@ query <- getObservationalResearchQuery()
 pmids <- queryOnlinePubmed(query)
 saveRDS(pmids, file.path(folder, "AllObsResearchPmids.rds"))
 
+# Find all PMIDs of hypertension medication research ---------------------------
+drugs <- c("Acebutolol", "Aliskiren", "Amiloride", "Amlodipine", "Atenolol", "Azilsartan", "Benazepril", "Betaxolol", "Bisoprolol", "Bumetanide", "Candesartan", "Captopril", "Carvedilol", "Chlorthalidone", "Clonidine", "Diltiazem", "Doxazosin", "Enalapril", "Eplerenone", "Eprosartan", "Felodipine", "Fosinopril", "Furosemide", "Guanfacine", "Hydralazine", "Hydrochlorothiazide", "Indapamide", "irbesartan", "Isradipine", "Labetalol", "Lisinopril", "Losartan", "Methyldopa", "Metolazone", "Metoprolol", "Minoxidil", "Moexipril", "Nadolol", "Nebivolol", "Nicardipine", "Nifedipine", "Nisoldipine", "Olmesartan", "Penbutolol", "Perindopril", "Pindolol", "Prazosin", "Propranolol", "Quinapril", "Ramipril", "Spironolactone", "Telmisartan", "Terazosin", "Torsemide", "Trandolapril", "Triamterene", "Valsartan", "Verapamil", "Angiotensin-converting enzyme inhibitors", "ACE inhibitors", "Alpha-1 blockers", "Angiotensin receptor blockers", "Direct vasodilators", "Diuretics", "Alpha-1 blockers", "Beta blockers", "Calcium channel blockers")
+query <- sprintf("hypertension AND (\"%s\") AND (%s)", 
+                 paste(drugs, collapse = "\" OR \""),
+                 getObservationalResearchQuery())
+writeLines(query)
+pmids <- queryOnlinePubmed(query)
+saveRDS(pmids, file.path(folder, "AntiHypertensivesObsResearchPmids.rds"))
+
+# saveRDS(estimates, file.path(folder, "estimatesHypertension.rds"))
+# plotEstimates(estimates, fileName = file.path(folder, "Hypertension.png"))
 
 # Extract all effect-size estimates from given PMIDs ---------------------------
 pmids <- readRDS(file.path(folder, "AllObsResearchPmids.rds"))

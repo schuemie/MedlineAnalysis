@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-numberPattern <- "[0-9][0-9]?[0-9]?\\.[0-9][0-9]?[0-9]?"
+numberPattern <- "[0-9]?[0-9]?[0-9]?\\.[0-9][0-9]?[0-9]?"
 emPattern <- paste0("(odds ratio|o.r.|or|relative risk|r.r.|rr|hazard ratio|h.r.|hr|hazard|rate ratio)([^0-9a-z]*| is | of )", numberPattern)
 pValuePattern <- "p ?[<=>] ?0?\\.[0-9][0-9]?[0-9]?"
 ciPattern <- paste0(numberPattern, " ?(-|to) ?", numberPattern)
@@ -30,6 +30,7 @@ estimatePattern <- paste0("(", emPattern, " ?[\\(\\[]|[\\(\\[][^)\\]]*", emPatte
 #' @export
 extractEstimates <- function(abstract) {
   estimates <- stringr::str_extract_all(tolower(abstract), estimatePattern, )[[1]]
+  estimates
   estimates <- lapply(estimates, extractEstimate)
   estimates <- bind_rows(estimates)
   return(estimates)
@@ -115,7 +116,7 @@ computeLogRrAndSeLogRr <- function(estimates) {
         seFromP = abs(log(.data$rr) / qnorm(.data$p))
       ) %>%
       mutate(
-        logRr = log(rr),
+        logRr = log(.data$rr),
         seLogRr = ifelse(is.na(.data$seFromCi), .data$seFromP, .data$seFromCi)
       ) %>%
       select(-.data$seFromCi, -.data$seFromP)
@@ -167,7 +168,7 @@ plotEstimates <- function(estimates, jitter = TRUE, fileName = NULL) {
   themeLA <- ggplot2::element_text(colour = "#000000", size = 12, hjust = 0)
 
   alpha <- 1 - min(0.95 * (nrow(estimates) / 50000)^0.1, 0.95)
-  plot <- ggplot2::ggplot(estimates, ggplot2::aes(x = logRr, y = seLogRr)) +
+  plot <- ggplot2::ggplot(estimates, ggplot2::aes(x = .data$logRr, y = .data$seLogRr)) +
     ggplot2::geom_vline(xintercept = log(breaks), colour = "#AAAAAA", lty = 1, size = 0.5) +
     ggplot2::geom_abline(slope = 1 / qnorm(0.025), colour = rgb(0.8, 0, 0), linetype = "dashed", size = 1, alpha = 0.5) +
     ggplot2::geom_abline(slope = 1 / qnorm(0.975), colour = rgb(0.8, 0, 0), linetype = "dashed", size = 1, alpha = 0.5) +
