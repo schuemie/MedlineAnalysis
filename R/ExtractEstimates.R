@@ -47,7 +47,7 @@ extractEstimate <- function(estimate) {
     estimateDigits = NA,
     pDigits = NA
   )
-
+  
   substring <- stringr::str_extract(estimate, emPattern)
   if (!is.na(substring)) {
     rrString <- stringr::str_extract(substring, numberPattern)
@@ -60,7 +60,7 @@ extractEstimate <- function(estimate) {
     result$p <- as.numeric(pString)
     result$pDigits <- nchar(stringr::str_extract(pString, "\\.[0-9]+")) - 1
   }
-
+  
   substring <- stringr::str_extract(estimate, ciPattern)
   if (!is.na(substring)) {
     ci <- as.numeric(stringr::str_extract_all(substring, numberPattern)[[1]])
@@ -135,14 +135,14 @@ computeLogRrAndSeLogRr <- function(estimates) {
 #' Returns a ggplot plot.
 #' 
 #' @export
-plotEstimates <- function(estimates, jitter = TRUE, fileName = NULL) {
+plotEstimates <- function(estimates, jitter = TRUE, size = 1, showSignificant = TRUE, fileName = NULL) {
   counts <- estimates %>%
     mutate(significant = ifelse(is.na(.data$p), .data$ciLb > 1 | .data$ciUb < 1, .data$p < 0.05)) %>%
     summarise(
       significantCount = sum(.data$significant, na.rm = TRUE),
       totalCount = n()
     )
-
+  
   labels <- tibble(
     logRr = c(log(0.15), log(0.15)),
     seLogRr = c(0.9, 0.8),
@@ -151,28 +151,57 @@ plotEstimates <- function(estimates, jitter = TRUE, fileName = NULL) {
       label2 <- paste0(formatC(100 * (1 - counts$significantCount / counts$totalCount), digits = 1, format = "f"), "% of CIs include 1")
     )
   )
-
+  
   if (jitter) {
     estimates <- jitterEstimates(estimates)
   }
-
+  
   if (!"seLogRr" %in% colnames(estimates)) {
     estimates <- computeLogRrAndSeLogRr(estimates)
   }
   estimates <- estimates %>%
     filter(!is.na(.data$seLogRr))
-
+  
   breaks <- c(0.1, 0.25, 0.5, 1, 2, 4, 6, 8, 10)
   theme <- ggplot2::element_text(colour = "#000000", size = 12)
   themeRA <- ggplot2::element_text(colour = "#000000", size = 12, hjust = 1)
   themeLA <- ggplot2::element_text(colour = "#000000", size = 12, hjust = 0)
-
-  alpha <- 1 - min(0.95 * (nrow(estimates) / 50000)^0.1, 0.95)
+  
+  alpha <- 1 - min(0.99 * (nrow(estimates) / 50000)^0.1, 0.99)
+  # plot <- ggplot2::ggplot(estimates, ggplot2::aes(x = .data$logRr, y = .data$seLogRr)) +
+  #   ggplot2::geom_vline(xintercept = log(breaks), colour = "#AAAAAA", lty = 1, size = 0.5) +
+  #   ggplot2::geom_abline(slope = 1 / qnorm(0.025), colour = rgb(0.8, 0, 0), linetype = "dashed", size = 1, alpha = 0.5) +
+  #   ggplot2::geom_abline(slope = 1 / qnorm(0.975), colour = rgb(0.8, 0, 0), linetype = "dashed", size = 1, alpha = 0.5) +
+  #   ggplot2::geom_point(size = 1, color = rgb(0, 0, 0, alpha = 0.05), alpha = alpha, shape = 16) +
+  #   ggplot2::geom_hline(yintercept = 0) +
+  #   ggplot2::geom_label(ggplot2::aes(label = .data$label), alpha = 1, hjust = "left", size = 5, data = labels) +
+  #   ggplot2::scale_x_continuous("Effect size", limits = log(c(0.1, 10)), breaks = log(breaks), labels = breaks) +
+  #   ggplot2::scale_y_continuous("Standard Error", limits = c(0, 1)) +
+  #   ggplot2::theme(
+  #     panel.grid.minor = ggplot2::element_blank(),
+  #     panel.background = ggplot2::element_blank(),
+  #     panel.grid.major = ggplot2::element_blank(),
+  #     axis.ticks = ggplot2::element_blank(),
+  #     axis.text.y = themeRA,
+  #     axis.text.x = theme,
+  #     axis.title = theme,
+  #     legend.key = ggplot2::element_blank(),
+  #     strip.text.x = theme,
+  #     strip.text.y = theme,
+  #     strip.background = ggplot2::element_blank(),
+  #     legend.position = "none"
+  #   )
+  
+  if (!showSignificant) {
+    labels <- labels[1, ]
+  }
   plot <- ggplot2::ggplot(estimates, ggplot2::aes(x = .data$logRr, y = .data$seLogRr)) +
-    ggplot2::geom_vline(xintercept = log(breaks), colour = "#AAAAAA", lty = 1, size = 0.5) +
-    ggplot2::geom_abline(slope = 1 / qnorm(0.025), colour = rgb(0.8, 0, 0), linetype = "dashed", size = 1, alpha = 0.5) +
-    ggplot2::geom_abline(slope = 1 / qnorm(0.975), colour = rgb(0.8, 0, 0), linetype = "dashed", size = 1, alpha = 0.5) +
-    ggplot2::geom_point(size = 1, color = rgb(0, 0, 0, alpha = 0.05), alpha = alpha, shape = 16) +
+    ggplot2::geom_vline(xintercept = log(breaks), colour = "#AAAAAA", lty = 1, size = 0.5)
+  if (showSignificant) {
+    plot <- plot + ggplot2::geom_abline(slope = 1 / qnorm(0.025), linetype = "dashed", size = 1, alpha = 0.5) +
+      ggplot2::geom_abline(slope = 1 / qnorm(0.975), linetype = "dashed", size = 1, alpha = 0.5) 
+  }
+  plot <- plot + ggplot2::geom_point(size = size, color = rgb(0, 0, 0.8), alpha = alpha, shape = 16) +
     ggplot2::geom_hline(yintercept = 0) +
     ggplot2::geom_label(ggplot2::aes(label = .data$label), alpha = 1, hjust = "left", size = 5, data = labels) +
     ggplot2::scale_x_continuous("Effect size", limits = log(c(0.1, 10)), breaks = log(breaks), labels = breaks) +
@@ -191,6 +220,7 @@ plotEstimates <- function(estimates, jitter = TRUE, fileName = NULL) {
       strip.background = ggplot2::element_blank(),
       legend.position = "none"
     )
+  
   if (!is.null(fileName)) {
     ggplot2::ggsave(fileName, plot, width = 8, height = 5, dpi = 300)
   }
