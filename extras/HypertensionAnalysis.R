@@ -126,3 +126,25 @@ estimates <- readRDSsaveRDS(file.path(folder, "legendEstimates.rds"))
 estimates$ciLb <- NA
 estimates$ciUb <- NA
 plotEstimates(estimates, jitter = FALSE, size = 0.2, fileName = file.path(folder, "Legend.png"))
+
+# Show z-curve -----------------------------------------------------------------
+library(ggplot2)
+
+estimates <- readRDS(file.path(folder, "Estimates.rds"))
+
+estimates <- estimates %>%
+  computeLogRrAndSeLogRr() %>%
+  filter(!is.na(seLogRr)) %>%
+  mutate(z = logRr/seLogRr)
+
+# Randomly sample 1 value per PMID:
+estimates <- estimates %>%
+  group_by(pmid) %>%
+  slice_sample(n = 1)
+
+plot <- ggplot(estimates, aes(x = z)) +
+  geom_histogram() +
+  geom_vline(xintercept = 1.96, color = "red") + 
+  scale_x_continuous("z-scores", limits = c(-0.04,6))
+
+ggsave(file.path(folder, "z.png"), plot)
